@@ -9,15 +9,18 @@ from flask import session,abort
 from werkzeug.utils import secure_filename
 import PyPDF2
 import uuid
+from openai import OpenAI
+import time
+
+load_dotenv()
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 
 # Load environment variables from .env
-load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
-
 
 # MySQL Config
 app.config['MYSQL_HOST'] = os.getenv('DB_HOST')
@@ -33,6 +36,90 @@ jwt = JWTManager(app)
 @app.route('/')
 def index():
     return redirect(url_for('login'))
+
+@app.route('/ask', methods=['GET'])
+def ask_form():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT id, title FROM documents WHERE user_id=%s ORDER BY upload_time DESC", (user_id,))
+        document_list = cur.fetchall()
+        cur.close()
+    except Exception as e:
+        document_list = []
+        # Optionally log the error here
+
+    return render_template('ask.html', documents=document_list)
+
+@app.route('/ask', methods=['POST'])
+@jwt_required()
+def ask():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+
+    question = data.get('question')
+    document_id = data.get('document_id')
+
+    if not question or not document_id:
+        return jsonify({"msg": "Question and document_id are required"}), 400
+
+    # Fetch document content for the user
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT content FROM documents WHERE id=%s AND user_id=%s", (document_id, user_id))
+        row = cur.fetchone()
+        cur.close()
+
+        if not row:
+            return jsonify({"msg": "Document not found"}), 404
+
+        document_content = row[0]
+
+    except Exception as e:
+        return jsonify({"msg": "DB error", "error": str(e)}), 500
+
+    # Prepare the prompt (you can customize this)
+    # prompt = f"Based on the following document, answer the question:\n\n{document_content}\n\nQuestion: {question}\nAnswer:"
+
+    # Prepare conversation for Chat API
+    messages = [
+        {"role": "system", "content": "You are an assistant that only answers questions using the provided document text. If the answer is not found in the document, say 'I cannot find the answer in the provided text.'"},
+        {"role": "user", "content": f"Document:\n{document_content}\n\nQuestion: {question}"}
+    ]
+
+    try:
+        start_time = time.time()
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            max_tokens=512,
+            temperature=0.0
+        )
+        latency = time.time() - start_time
+        answer = response.choices[0].message.content.strip()
+        tokens_used = response.usage.total_tokens if response.usage else 0
+    except Exception as e:
+        return jsonify({"msg": "OpenAI API error", "error": str(e)}), 500
+
+    # Save Q&A history
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """
+            INSERT INTO qa_history (user_id, document_id, question, response, latency, tokens_used)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            (user_id, document_id, question, answer, latency, tokens_used)
+        )
+        mysql.connection.commit()
+        cur.close()
+    except Exception as e:
+        return jsonify({"msg": "DB save error", "error": str(e)}), 500
+
+    return jsonify({"answer": answer, "latency": latency, "tokens_used": tokens_used})
 
 @app.route('/upload', methods=['GET'])
 def upload_form():
