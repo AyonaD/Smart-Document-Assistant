@@ -12,6 +12,8 @@
 document.getElementById('uploadForm').addEventListener('submit', async e => {
   e.preventDefault();
 
+  const messageDiv = document.getElementById('message');
+  
   const fileInput = e.target.elements.file;
   const file = fileInput.files[0];
   if (!file) {

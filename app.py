@@ -11,6 +11,7 @@ import PyPDF2
 import uuid
 from openai import OpenAI
 import time
+from datetime import datetime
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
@@ -109,10 +110,10 @@ def ask():
         cur = mysql.connection.cursor()
         cur.execute(
             """
-            INSERT INTO qa_history (user_id, document_id, question, response, latency, tokens_used)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO qa_history (user_id, document_id, question, answer, latency_ms, tokens_used,asked_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             """,
-            (user_id, document_id, question, answer, latency, tokens_used)
+            (user_id, document_id, question, answer, latency, tokens_used, datetime.now())
         )
         mysql.connection.commit()
         cur.close()
@@ -165,10 +166,10 @@ def upload_file():
         cur = mysql.connection.cursor()
         cur.execute(
             """
-            INSERT INTO documents (user_id, title, file_name, content)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO documents (user_id, title, file_name, content,upload_time)
+            VALUES (%s, %s, %s, %s, %s)
             """,
-            (user_id, file.filename, filepath, extracted_text)
+            (user_id, file.filename, filepath, extracted_text, datetime.now())
         )
         mysql.connection.commit()
         cur.close()
