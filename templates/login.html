@@ -1,14 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-md mx-auto bg-white p-6 rounded shadow">
-  <h1 class="text-xl font-bold mb-4">Login</h1>
-  <form id="loginForm" method="POST" action="/login">
-    <input name="email" placeholder="Email" class="w-full p-2 border mb-2"/>
-    <input name="password" type="password" placeholder="Password" class="w-full p-2 border mb-2" />
-    <button class="w-full bg-blue-600 text-white p-2 rounded">Login</button>
-  </form>
-  <div id="message" class="mt-2 text-red-600"></div>
+
+<div class="min-h-screen flex items-center justify-center bg-gray-100 text-center">
+  <div class="max-w-md mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-xl font-bold mb-4">Login</h1>
+    <form id="loginForm" method="POST" action="/login">
+      <input name="email" placeholder="Email" class="w-full p-2 border mb-2"/>
+      <input name="password" type="password" placeholder="Password" class="w-full p-2 border mb-2" />
+      <button class="w-full bg-blue-600 text-white p-2 rounded">Login</button>
+    </form>
+    <p class="my-4 text-gray-600">or</p>
+    <a href="/register" class="text-blue-600 hover:underline">Register</a>
+    <div id="message" class="mt-2 text-red-600"></div>
+  </div>
 </div>
+
 <script>
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();

@@ -1,13 +1,19 @@
-{% extends "base.html" %}
+{% extends "protected.html" %}
 {% block content %}
-<div class="max-w-md mx-auto bg-white p-6 rounded shadow">
-  <h1 class="text-xl font-bold mb-4">Upload Document</h1>
-  <form id="uploadForm" method="POST" enctype="multipart/form-data">
-    <input type="file" name="file" accept=".txt,.pdf" required class="mb-4" />
-    <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Upload</button>
-  </form>
-  <div id="message" class="mt-2 text-red-600"></div>
+<div>
+
+  <div class="max-w-7xl mx-auto bg-white p-6 rounded shadow mt-6">
+    <h1 class="text-xl font-bold mb-4">Upload Document</h1>
+    <form id="uploadForm" method="POST" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".txt,.pdf" required class="mb-4" />
+      <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Upload</button>
+    </form>
+    <div id="message" class="mt-2 text-red-600"></div>
+  </div>
+
+
 </div>
+
 <script>
 document.getElementById('uploadForm').addEventListener('submit', async e => {
   e.preventDefault();

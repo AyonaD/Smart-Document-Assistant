@@ -38,6 +38,67 @@ jwt = JWTManager(app)
 def index():
     return redirect(url_for('login'))
 
+@app.route('/history')
+def history():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT id, title FROM documents WHERE user_id=%s ORDER BY upload_time DESC", (user_id,))
+        document_list = cur.fetchall()
+        cur.close()
+    except Exception as e:
+        document_list = []
+        # Optionally log the error here
+
+    return render_template('history.html', documents=document_list)
+
+@app.route('/history', methods=['POST'])
+@jwt_required()
+def get_history():
+    user_id = get_jwt_identity()
+
+    data = request.get_json() or {}
+    document_id = data.get('document_id')
+    search = data.get('search', '').strip()
+
+    query = """
+        SELECT d.title, q.question, q.answer, q.asked_at
+        FROM qa_history q
+        JOIN documents d ON q.document_id = d.id
+        WHERE q.user_id = %s
+    """
+    params = [user_id]
+
+    if document_id:
+        query += " AND d.id = %s"
+        params.append(document_id)
+
+    if search:
+        query += " AND (q.question LIKE %s OR q.answer LIKE %s)"
+        like_pattern = f"%{search}%"
+        params.extend([like_pattern, like_pattern])
+
+    query += " ORDER BY q.asked_at DESC"
+
+    cur = mysql.connection.cursor()
+    cur.execute(query, params)
+    rows = cur.fetchall()
+    cur.close()
+
+    history = []
+    for row in rows:
+        history.append({
+            "document_title": row[0],
+            "question": row[1],
+            "answer": row[2],
+            "created_at": row[3].strftime("%Y-%m-%d %H:%M")
+        })
+
+    return jsonify(history)
+
 @app.route('/ask', methods=['GET'])
 def ask_form():
     if 'user_id' not in session:

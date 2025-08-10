@@ -1,0 +1,111 @@
+{% extends "protected.html" %}
+{% block content %}
+<div class="max-w-7xl mx-auto p-6 bg-white rounded shadow mt-6">
+  <h2 class="text-2xl font-bold mb-6">Your Q&A History</h2>
+
+  <!-- Filters -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+    <!-- Document Filter -->
+    <select id="documentFilter" class="border p-2 rounded w-full sm:w-1/3">
+      <option value="">All Documents</option>
+      {% for doc in documents %}
+            <option value="{{ doc[0] }}">{{ doc[1] }}</option>
+        {% endfor %}
+      
+    </select>
+
+    <!-- Search Box -->
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Search questions or answers..."
+      class="border p-2 rounded w-full sm:w-2/3"
+    />
+  </div>
+
+  <!-- History Table -->
+  <div class="overflow-x-auto">
+    <table class="min-w-full table-auto border-collapse border border-gray-300">
+      <thead>
+        <tr class="bg-gray-100 text-left">
+          <th class="border border-gray-300 p-2">Document</th>
+          <th class="border border-gray-300 p-2">Question</th>
+          <th class="border border-gray-300 p-2">Answer</th>
+          <th class="border border-gray-300 p-2">Date & Time</th>
+        </tr>
+      </thead>
+      <tbody id="historyTableBody">
+        <!-- Example row:
+        <tr>
+          <td class="border border-gray-300 p-2">Document Title 1</td>
+          <td class="border border-gray-300 p-2">What is AI?</td>
+          <td class="border border-gray-300 p-2">Artificial Intelligence...</td>
+          <td class="border border-gray-300 p-2">2025-08-10 14:30</td>
+        </tr>
+        -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const historyTableBody = document.getElementById('historyTableBody');
+  const documentFilter = document.getElementById('documentFilter');
+  const searchInput = document.getElementById('searchInput');
+
+  
+  // Fetch history with current filter/search
+  async function loadHistory() {
+    const docId = documentFilter.value;
+    const search = searchInput.value.trim();
+    await fetchHistory(docId, search);
+  }
+
+  // Fetch history API call
+  async function fetchHistory(documentId = '', search = '') {
+    const res = await fetch('/history', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+      },
+      body: JSON.stringify({ document_id: documentId, search: search })
+    });
+
+    if (!res.ok) {
+      alert('Failed to fetch history');
+      return;
+    }
+
+    const data = await res.json();
+    historyTableBody.innerHTML = '';
+
+    data.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="border border-gray-300 p-2">${item.document_title}</td>
+        <td class="border border-gray-300 p-2">${item.question}</td>
+        <td class="border border-gray-300 p-2">${item.answer}</td>
+        <td class="border border-gray-300 p-2">${item.created_at}</td>
+      `;
+      historyTableBody.appendChild(tr);
+    });
+  }
+
+  // Event listeners for filters
+  documentFilter.addEventListener('change', loadHistory);
+  searchInput.addEventListener('input', () => {
+    // debounce to avoid too many requests (optional)
+    clearTimeout(window.searchTimeout);
+    window.searchTimeout = setTimeout(loadHistory, 300);
+  });
+
+  // On page load
+  window.onload = async () => {
+    await loadHistory();     // Load all history
+  };
+</script>
+
+
+
+{% endblock %}
