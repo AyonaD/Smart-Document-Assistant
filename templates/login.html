@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-6 rounded shadow">
+  <h1 class="text-xl font-bold mb-4">Login</h1>
+  <form id="loginForm" method="POST" action="/login">
+    <input name="email" placeholder="Email" class="w-full p-2 border mb-2"/>
+    <input name="password" type="password" placeholder="Password" class="w-full p-2 border mb-2" />
+    <button class="w-full bg-blue-600 text-white p-2 rounded">Login</button>
+  </form>
+  <div id="message" class="mt-2 text-red-600"></div>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const email = e.target.email.value;
+  const password = e.target.password.value;
+  const messageDiv = document.getElementById('message');
+
+  try {
+    const res = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      localStorage.setItem('access_token', data.access_token);
+      messageDiv.style.color = 'green';
+      messageDiv.textContent = 'Login successful! Redirecting...';
+
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1000);
+    } else {
+      messageDiv.style.color = 'red';
+      messageDiv.textContent = data.msg || 'Login failed';
+    }
+  } catch (err) {
+    messageDiv.style.color = 'red';
+    messageDiv.textContent = 'Error: ' + err.message;
+  }
+});
+
+</script>
+{% endblock %}
