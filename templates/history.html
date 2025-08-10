@@ -31,18 +31,12 @@
           <th class="border border-gray-300 p-2">Document</th>
           <th class="border border-gray-300 p-2">Question</th>
           <th class="border border-gray-300 p-2">Answer</th>
+          <th class="border border-gray-300 p-2">Token Used</th>
           <th class="border border-gray-300 p-2">Date & Time</th>
         </tr>
       </thead>
       <tbody id="historyTableBody">
-        <!-- Example row:
-        <tr>
-          <td class="border border-gray-300 p-2">Document Title 1</td>
-          <td class="border border-gray-300 p-2">What is AI?</td>
-          <td class="border border-gray-300 p-2">Artificial Intelligence...</td>
-          <td class="border border-gray-300 p-2">2025-08-10 14:30</td>
-        </tr>
-        -->
+    
       </tbody>
     </table>
   </div>
@@ -86,6 +80,7 @@
         <td class="border border-gray-300 p-2">${item.document_title}</td>
         <td class="border border-gray-300 p-2">${item.question}</td>
         <td class="border border-gray-300 p-2">${item.answer}</td>
+        <td class="border border-gray-300 p-2">${item.tokens_used}</td>
         <td class="border border-gray-300 p-2">${item.created_at}</td>
       `;
       historyTableBody.appendChild(tr);

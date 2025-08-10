@@ -65,7 +65,7 @@ def get_history():
     search = data.get('search', '').strip()
 
     query = """
-        SELECT d.title, q.question, q.answer, q.asked_at
+        SELECT d.title, q.question, q.answer, q.asked_at, q.tokens_used
         FROM qa_history q
         JOIN documents d ON q.document_id = d.id
         WHERE q.user_id = %s
@@ -94,7 +94,8 @@ def get_history():
             "document_title": row[0],
             "question": row[1],
             "answer": row[2],
-            "created_at": row[3].strftime("%Y-%m-%d %H:%M")
+            "created_at": row[3].strftime("%Y-%m-%d %H:%M"),
+            "tokens_used": row[4],
         })
 
     return jsonify(history)
